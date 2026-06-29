@@ -158,6 +158,19 @@ def _fragmento_bracket(request: Request):
 # ---------------------------------------------------------------------
 # Escritura (SOLO admin)
 # ---------------------------------------------------------------------
+def _fragmento_predicciones(request: Request, partido_id: int):
+    return templates.TemplateResponse(request, "_predicciones_partido.html", {
+        "partido": db.info_partido(partido_id),
+        "preds": db.predicciones_de_partido(partido_id),
+    })
+
+
+@app.get("/partidos/{partido_id}/predicciones", response_class=HTMLResponse)
+def ver_predicciones(request: Request, partido_id: int):
+    """Lista de predicciones de un partido (visible para todos)."""
+    return _fragmento_predicciones(request, partido_id)
+
+
 @app.post("/predicciones", response_class=HTMLResponse)
 def crear_prediccion(
     request: Request,
@@ -170,9 +183,8 @@ def crear_prediccion(
     if goles_local < 0 or goles_visitante < 0:
         raise HTTPException(400, "Los goles no pueden ser negativos.")
     db.guardar_prediccion(usuario_id, partido_id, goles_local, goles_visitante)
-    return templates.TemplateResponse(request, "_prediccion_ok.html", {
-        "goles_local": goles_local, "goles_visitante": goles_visitante,
-    })
+    # Devuelve la lista actualizada de predicciones de ese partido.
+    return _fragmento_predicciones(request, partido_id)
 
 
 @app.post("/partidos/{partido_id}/resultado", response_class=HTMLResponse)

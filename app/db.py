@@ -74,6 +74,29 @@ FROM partidos;
 
 LISTAR_USUARIOS = "SELECT id, nombre FROM usuarios ORDER BY nombre;"
 
+# Info básica de un partido (para la cabecera de la lista de predicciones)
+INFO_PARTIDO = """
+SELECT m.id, m.estado, m.goles_local, m.goles_visitante,
+       el.nombre AS local,     el.codigo AS local_codigo,
+       ev.nombre AS visitante, ev.codigo AS visitante_codigo
+FROM partidos m
+LEFT JOIN equipos el ON el.id = m.equipo_local_id
+LEFT JOIN equipos ev ON ev.id = m.equipo_visitante_id
+WHERE m.id = %s;
+"""
+
+# Predicciones de todos los usuarios para un partido (con puntos si ya se jugó)
+PREDS_PARTIDO = """
+SELECT u.nombre, p.goles_local, p.goles_visitante,
+       calcular_puntos(p.goles_local, p.goles_visitante,
+                       m.goles_local, m.goles_visitante) AS puntos
+FROM predicciones p
+JOIN usuarios u ON u.id = p.usuario_id
+JOIN partidos m ON m.id = p.partido_id
+WHERE p.partido_id = %s
+ORDER BY puntos DESC, u.nombre ASC;
+"""
+
 UPSERT_PREDICCION = """
 INSERT INTO predicciones (usuario_id, partido_id, goles_local, goles_visitante)
 VALUES (%(usuario_id)s, %(partido_id)s, %(goles_local)s, %(goles_visitante)s)
@@ -112,6 +135,16 @@ def estadisticas():
 def listar_usuarios():
     with pool.connection() as conn:
         return conn.execute(LISTAR_USUARIOS).fetchall()
+
+
+def info_partido(partido_id):
+    with pool.connection() as conn:
+        return conn.execute(INFO_PARTIDO, (partido_id,)).fetchone()
+
+
+def predicciones_de_partido(partido_id):
+    with pool.connection() as conn:
+        return conn.execute(PREDS_PARTIDO, (partido_id,)).fetchall()
 
 
 def guardar_prediccion(usuario_id, partido_id, goles_local, goles_visitante):

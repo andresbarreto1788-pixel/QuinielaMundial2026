@@ -1,0 +1,38 @@
+<div class="preds-box">
+    {% if partido %}
+    <div class="preds-head">
+        {% if partido.local_codigo %}<img src="https://flagcdn.com/w20/{{ partido.local_codigo }}.png" alt="">{% endif %}
+        {{ partido.local }} <b>vs</b> {{ partido.visitante }}
+        {% if partido.visitante_codigo %}<img src="https://flagcdn.com/w20/{{ partido.visitante_codigo }}.png" alt="">{% endif %}
+        {% if partido.estado == 'finalizado' %}
+        <span class="preds-real">Resultado: {{ partido.goles_local }} - {{ partido.goles_visitante }}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if preds %}
+    <table class="preds-tabla">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Pronóstico</th>
+                {% if partido and partido.estado == 'finalizado' %}<th>Pts</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in preds %}
+            <tr>
+                <td>{{ p.nombre }}</td>
+                <td class="marc">{{ p.goles_local }} - {{ p.goles_visitante }}</td>
+                {% if partido and partido.estado == 'finalizado' %}
+                <td class="pts pts-{{ p.puntos }}">{{ p.puntos }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="preds-total">{{ preds|length }} predicci{{ 'ón' if preds|length == 1 else 'ones' }}</div>
+    {% else %}
+    <p class="preds-vacio">Aún no hay predicciones para este partido.</p>
+    {% endif %}
+</div>

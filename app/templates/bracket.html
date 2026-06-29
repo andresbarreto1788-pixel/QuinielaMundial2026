@@ -80,6 +80,31 @@
     details[open]>summary{border-color:var(--gold)}
     .form-mini{margin-top:.45rem;display:flex;flex-direction:column;gap:.3rem;text-align:left}
     .status{display:block;font-size:.72rem;color:var(--verde);margin-top:.4rem;min-height:.9rem;text-align:center}
+
+    /* ===== Lista de predicciones ===== */
+    .lista-pred{margin-top:1rem}
+    .preds-box{border:1px solid var(--linea);border-radius:12px;padding:.7rem;background:rgba(5,10,31,.5)}
+    .preds-head{display:flex;align-items:center;gap:.4rem;font-weight:700;font-size:.85rem;
+        margin-bottom:.5rem;flex-wrap:wrap}
+    .preds-head img{width:20px;height:14px;object-fit:cover;border-radius:2px}
+    .preds-head b{color:var(--muted);font-weight:600}
+    .preds-real{margin-left:auto;font-family:'Anton';color:var(--gold);font-size:.8rem;letter-spacing:.5px}
+    .preds-tabla{width:100%;border-collapse:collapse;font-size:.8rem}
+    .preds-tabla th{font-size:.62rem;text-transform:uppercase;color:var(--muted);text-align:left;padding:.25rem .4rem}
+    .preds-tabla td{padding:.28rem .4rem;border-bottom:1px solid rgba(255,255,255,.05)}
+    .preds-tabla .marc{font-weight:700;color:var(--txt);text-align:center;white-space:nowrap}
+    .preds-tabla .pts{text-align:center;font-family:'Anton';width:2rem}
+    .pts-3{color:var(--verde)} .pts-1{color:var(--gold)} .pts-0{color:var(--muted)}
+    .preds-total{font-size:.68rem;color:var(--muted);margin-top:.4rem;text-align:right}
+    .preds-vacio{color:var(--muted);font-size:.8rem;text-align:center;padding:.6rem}
+
+    /* Botón "ver predicciones" dentro de cada tarjeta */
+    .ver-preds{margin-top:.4rem}
+    .ver-preds>summary{list-style:none;cursor:pointer;font-size:.64rem;font-weight:800;text-align:center;
+        padding:.28rem;border-radius:7px;border:1px dashed var(--linea);color:var(--muted)}
+    .ver-preds>summary::-webkit-details-marker{display:none}
+    .ver-preds[open]>summary{border-style:solid;border-color:var(--gold);color:var(--gold)}
+    .pred-slot{margin-top:.35rem}
 </style>
 
 {% if es_admin %}
@@ -105,7 +130,7 @@
 
     <div class="grid2">
         <!-- Predicción de un usuario -->
-        <form hx-post="/predicciones" hx-target="#panelStatus" hx-swap="innerHTML">
+        <form hx-post="/predicciones" hx-target="#listaPred" hx-swap="innerHTML">
             <p class="sub">🎯 Predicción de un usuario</p>
             <input type="hidden" name="partido_id" id="pPartidoId">
             <label>Usuario</label>
@@ -114,9 +139,9 @@
                 {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
             </select>
             <div class="gol-row" style="margin-top:.4rem">
-                <div><label>Goles local</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                <div><label id="lblPLoc">Local</label><input type="number" name="goles_local" min="0" value="0" required></div>
                 <span class="x">-</span>
-                <div><label>Goles visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+                <div><label id="lblPVis">Visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
             </div>
             <button class="btn btn-needs-sel" type="submit" disabled style="width:100%;margin-top:.7rem">Guardar predicción</button>
         </form>
@@ -127,16 +152,20 @@
             <input type="hidden" name="equipo_local_id" id="rLocId">
             <input type="hidden" name="equipo_visitante_id" id="rVisId">
             <div class="gol-row">
-                <div><label>Goles local</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                <div><label id="lblRLoc">Local</label><input type="number" name="goles_local" min="0" value="0" required></div>
                 <span class="x">-</span>
-                <div><label>Goles visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+                <div><label id="lblRVis">Visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
             </div>
             <label style="margin-top:.4rem">Clasifica (si hay empate / penales)</label>
             <select name="ganador_equipo_id" id="rGan"><option value="">—</option></select>
             <button class="btn btn-needs-sel" type="submit" disabled style="width:100%;margin-top:.7rem">Registrar resultado</button>
         </form>
     </div>
-    <div id="panelStatus" class="status"></div>
+
+    <!-- Lista de predicciones del partido seleccionado -->
+    <div id="listaPred" class="lista-pred">
+        <p class="preds-vacio">Elige un partido arriba para ver las predicciones de todos.</p>
+    </div>
 </section>
 {% endif %}
 
@@ -211,6 +240,8 @@
     window.addEventListener('resize',()=>{clearTimeout(window.__rt);window.__rt=setTimeout(refrescar,120);});
     document.body.addEventListener('htmx:afterSwap',()=>setTimeout(refrescar,150));
     setTimeout(()=>{ajustar();dibujarLineas();},300);
+    // Al abrir/cerrar un panel dentro de una tarjeta cambia la altura -> redibujar
+    document.getElementById('bracket')?.addEventListener('toggle',()=>setTimeout(dibujarLineas,60),true);
 
     // ===== Panel admin: buscador + selección de partido =====
     (function(){
@@ -233,7 +264,14 @@
                 fr.setAttribute('hx-post','/partidos/'+b.dataset.id+'/resultado');
                 if(window.htmx) htmx.process(fr);
                 document.getElementById('selTxt').textContent=b.dataset.loc+' vs '+b.dataset.vis;
+                // Etiquetas con los nombres reales de los equipos
+                const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+                set('lblPLoc','⚽ '+b.dataset.loc);  set('lblPVis','⚽ '+b.dataset.vis);
+                set('lblRLoc','⚽ '+b.dataset.loc);  set('lblRVis','⚽ '+b.dataset.vis);
                 document.querySelectorAll('.btn-needs-sel').forEach(x=>x.disabled=false);
+                // Cargar la lista de predicciones de ese partido
+                if(window.htmx) htmx.ajax('GET','/partidos/'+b.dataset.id+'/predicciones',
+                    {target:'#listaPred',swap:'innerHTML'});
             });
         });
     })();
