@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:grid;gap:1.4rem;grid-template-columns:1fr;max-width:700px;margin:0 auto">
+    <section class="card" data-anim style="text-align:center;background:
+        linear-gradient(160deg,rgba(91,43,179,.45),rgba(13,20,48,.75));">
+        <div class="stat" style="justify-content:center">
+            <div><b>{{ stats.jugados }}</b><span>Partidos jugados</span></div>
+            <div><b>{{ stats.total }}</b><span>Partidos totales</span></div>
+        </div>
+        <a class="btn" href="/bracket">🗂️ Predecir y cargar resultados en el bracket →</a>
+    </section>
+
+    <section class="card" data-anim>
+        <h2>🏆 Tabla de Posiciones</h2>
+        <div id="tabla-posiciones" hx-get="/tabla" hx-trigger="every 20s" hx-swap="innerHTML">
+            {% include "_tabla.html" %}
+        </div>
+    </section>
+</div>
+{% endblock %}

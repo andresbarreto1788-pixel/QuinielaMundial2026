@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: quiniela
+    # PostgreSQL ejecuta en orden alfabético los .sql de este directorio
+    # SOLO la primera vez que se crea el volumen de datos.
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d quiniela"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/quiniela
+      # Secretos: se toman de tu entorno/.env; los valores tras ":-" son SOLO para dev local.
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-local-cambiar}
+      ADMIN_USERS: ${ADMIN_USERS:-barreto:mundial2026,andres:andres2026}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Recarga en caliente al editar el código local
+    volumes:
+      - ./app:/code/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:

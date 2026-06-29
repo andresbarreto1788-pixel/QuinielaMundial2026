@@ -1,0 +1,4 @@
+# Normaliza saltos de línea a LF (evita romper scripts en Linux/Docker)
+* text=auto eol=lf
+*.sh text eol=lf
+entrypoint.sh text eol=lf

@@ -1,0 +1,56 @@
+{% set jugable = m.equipo_local_id and m.equipo_visitante_id and m.estado != 'finalizado' %}
+<div class="match {{ 'finalizado' if m.estado == 'finalizado' else '' }}"
+     id="m-{{ m.id }}" data-next="{{ m.next_partido_id or '' }}" data-anim>
+    {% if m.fecha_texto %}<div class="match-cab">🗓️ {{ m.fecha_texto }}</div>{% endif %}
+
+    <div class="equipo {{ 'gana' if m.ganador_equipo_id and m.ganador_equipo_id == m.equipo_local_id else '' }} {{ 'tbd' if not m.local else '' }}">
+        {% if m.local %}<img class="bandera" src="https://flagcdn.com/w80/{{ m.local_codigo }}.png" srcset="https://flagcdn.com/w160/{{ m.local_codigo }}.png 2x" alt="{{ m.local }}" loading="lazy">{% else %}<span class="bandera ph"></span>{% endif %}
+        <span class="nombre">{{ m.local or 'Por definir' }}</span>
+        <span class="goles">{% if m.estado == 'finalizado' %}{{ m.goles_local }}{% endif %}</span>
+    </div>
+    <div class="equipo {{ 'gana' if m.ganador_equipo_id and m.ganador_equipo_id == m.equipo_visitante_id else '' }} {{ 'tbd' if not m.visitante else '' }}">
+        {% if m.visitante %}<img class="bandera" src="https://flagcdn.com/w80/{{ m.visitante_codigo }}.png" srcset="https://flagcdn.com/w160/{{ m.visitante_codigo }}.png 2x" alt="{{ m.visitante }}" loading="lazy">{% else %}<span class="bandera ph"></span>{% endif %}
+        <span class="nombre">{{ m.visitante or 'Por definir' }}</span>
+        <span class="goles">{% if m.estado == 'finalizado' %}{{ m.goles_visitante }}{% endif %}</span>
+    </div>
+
+    {% if jugable and es_admin %}
+    <div class="acciones">
+        <details>
+            <summary>🎯 Predecir</summary>
+            <form class="form-mini" hx-post="/predicciones" hx-target="#status-{{ m.id }}" hx-swap="innerHTML">
+                <input type="hidden" name="partido_id" value="{{ m.id }}">
+                <select name="usuario_id" required>
+                    <option value="" disabled selected>¿Quién?</option>
+                    {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+                </select>
+                <div class="gol-row">
+                    <div><label>{{ m.local }}</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                    <span class="x">-</span>
+                    <div><label>{{ m.visitante }}</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+                </div>
+                <button class="btn" type="submit">Guardar</button>
+            </form>
+        </details>
+        <details>
+            <summary>✅ Resultado</summary>
+            <form class="form-mini" hx-post="/partidos/{{ m.id }}/resultado" hx-target="#bracket" hx-swap="outerHTML">
+                <input type="hidden" name="equipo_local_id" value="{{ m.equipo_local_id }}">
+                <input type="hidden" name="equipo_visitante_id" value="{{ m.equipo_visitante_id }}">
+                <div class="gol-row">
+                    <div><label>{{ m.local }}</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                    <span class="x">-</span>
+                    <div><label>{{ m.visitante }}</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+                </div>
+                <label>Clasifica (empate / penales)</label>
+                <select name="ganador_equipo_id">
+                    <option value="{{ m.equipo_local_id }}">{{ m.local }}</option>
+                    <option value="{{ m.equipo_visitante_id }}">{{ m.visitante }}</option>
+                </select>
+                <button class="btn" type="submit">Registrar</button>
+            </form>
+        </details>
+    </div>
+    <span class="status" id="status-{{ m.id }}"></span>
+    {% endif %}
+</div>

@@ -1,0 +1,38 @@
+<div id="bracket" class="llave">
+    <svg class="conectores" id="conectores" aria-hidden="true"></svg>
+
+    <!-- Mitad izquierda -->
+    <div class="lado lado-izq">
+        {% for col in bk.izquierda %}
+        <div class="col">
+            <div class="col-rotulo">{{ col.rotulo }}</div>
+            <div class="col-cuerpo">
+                {% for m in col.partidos %}{% include "_match.html" %}{% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Centro: Final + Copa -->
+    <div class="centro">
+        <div class="final-titulo">FINAL · 19 JULIO · 1:00 PM</div>
+        {% if bk.final %}
+            {% set m = bk.final %}
+            {% include "_match.html" %}
+        {% endif %}
+        <div class="trofeo-centro">{% include "_trofeo.svg" %}</div>
+        <div class="campeon-rotulo">🏆 CAMPEÓN DEL MUNDO</div>
+    </div>
+
+    <!-- Mitad derecha -->
+    <div class="lado lado-der">
+        {% for col in bk.derecha %}
+        <div class="col">
+            <div class="col-rotulo">{{ col.rotulo }}</div>
+            <div class="col-cuerpo">
+                {% for m in col.partidos %}{% include "_match.html" %}{% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

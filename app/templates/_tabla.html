@@ -1,0 +1,24 @@
+<table>
+    <thead>
+        <tr>
+            <th class="num">#</th>
+            <th>Participante</th>
+            <th class="num">Exactos</th>
+            <th class="num">Jugados</th>
+            <th class="num">Pts</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for fila in tabla %}
+        <tr>
+            <td class="num">
+                {%- if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif -%}
+            </td>
+            <td>{{ fila.nombre }}</td>
+            <td class="num">{{ fila.exactos }}</td>
+            <td class="num">{{ fila.jugados }}</td>
+            <td class="num pts">{{ fila.puntos }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

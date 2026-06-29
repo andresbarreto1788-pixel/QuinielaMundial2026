@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Entornos / secretos
+.env
+*.local
+
+# Logs / temporales
+*.log
+scratchpad/
+.DS_Store
+
+# Datos locales de Postgres (por si acaso)
+pgdata/

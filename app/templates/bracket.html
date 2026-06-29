@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* ===== Panel admin de carga rápida ===== */
+    .panel-admin{margin-bottom:1.1rem}
+    .grid2{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+    @media (max-width:760px){.grid2{grid-template-columns:1fr}}
+    .sub{font-weight:800;font-size:.9rem;margin:0 0 .5rem;color:var(--gold)}
+    .match-list{max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:.3rem;
+        border:1px solid var(--linea);border-radius:10px;padding:.4rem;background:rgba(5,10,31,.5)}
+    .mitem{display:flex;align-items:center;gap:.4rem;width:100%;text-align:left;cursor:pointer;
+        padding:.35rem .5rem;border-radius:8px;border:1px solid transparent;background:rgba(27,42,102,.5);
+        color:var(--txt);font-size:.8rem;font-weight:600}
+    .mitem:hover{border-color:var(--gold)}
+    .mitem.activo{background:var(--grad-oro);color:#3a2606;border-color:transparent}
+    .mitem img{width:24px;height:16px;object-fit:cover;border-radius:3px;flex:0 0 auto}
+    .mitem .r{margin-left:auto;font-size:.62rem;opacity:.7;font-weight:700}
+    .sel-actual{font-size:.82rem;color:var(--muted);margin:.5rem 0}
+    .sel-actual b{color:var(--txt)}
+    .gol-row{display:flex;align-items:end;gap:.5rem}
+    .gol-row>div{flex:1}
+    .gol-row .x{padding-bottom:.55rem;color:var(--muted);font-weight:700}
+    button[disabled]{opacity:.45;cursor:not-allowed}
+
+    /* ===== Barra de zoom ===== */
+    .zoom-bar{display:flex;align-items:center;gap:.5rem;justify-content:center;margin-bottom:.6rem;flex-wrap:wrap}
+    .zoom-bar button{font-family:'Anton';cursor:pointer;border:1px solid var(--linea);
+        background:rgba(27,42,102,.7);color:var(--txt);width:40px;height:36px;border-radius:10px;font-size:1.1rem}
+    .zoom-bar button:hover{border-color:var(--gold)}
+    .zoom-bar .ancho{width:auto;padding:0 .8rem;font-family:'Outfit';font-weight:800;font-size:.8rem;text-transform:uppercase}
+    .zoom-bar #zLbl{font-family:'Anton';color:var(--gold);min-width:54px;text-align:center}
+    .zoom-viewport{overflow:auto;-webkit-overflow-scrolling:touch;border-radius:18px}
+    .zoom-sizer{position:relative;margin:0 auto}
+
+    /* ===== Llave estilo torneo ===== */
+    .llave{position:absolute;top:0;left:0;width:max-content;transform-origin:top left;
+        display:flex;align-items:stretch;gap:0;padding:1.4rem 1rem 2rem;border-radius:22px;
+        background:
+          radial-gradient(700px 360px at 50% 6%, rgba(120,150,220,.12), transparent 70%),
+          linear-gradient(180deg, rgba(4,7,20,.94), rgba(2,5,16,.97));
+        box-shadow:inset 0 0 120px rgba(0,0,0,.7);border:1px solid rgba(245,196,81,.14)}
+    .llave::after{content:"";position:absolute;left:0;right:0;bottom:0;height:130px;z-index:0;
+        background:linear-gradient(0deg, rgba(22,80,40,.5), transparent);pointer-events:none}
+    .conectores{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible}
+    .lado{display:flex;align-items:stretch;position:relative;z-index:1}
+    .col{display:flex;flex-direction:column;min-width:168px;padding:0 22px}
+    .col-rotulo{text-align:center;font-family:'Anton';letter-spacing:2px;font-size:.72rem;
+        color:var(--gold);opacity:.85;margin-bottom:.6rem;text-transform:uppercase}
+    .col-cuerpo{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:.7rem}
+    .match{position:relative;z-index:2;width:100%;
+        background:linear-gradient(160deg,rgba(20,33,82,.92),rgba(9,16,40,.95));
+        backdrop-filter:blur(8px);border:1px solid rgba(245,196,81,.18);border-radius:12px;
+        padding:.45rem;box-shadow:0 12px 26px -16px rgba(0,0,0,.9);transition:transform .2s,box-shadow .2s}
+    .match:hover{transform:translateY(-2px);box-shadow:0 18px 34px -16px rgba(245,196,81,.4);z-index:5}
+    .match.finalizado{border-color:rgba(34,199,154,.55)}
+    .match-cab{font-size:.58rem;color:var(--muted);text-align:center;margin-bottom:.35rem;opacity:.85}
+    .equipo{display:flex;align-items:center;gap:.5rem;padding:.2rem .25rem;border-radius:7px}
+    .bandera{width:42px;height:28px;object-fit:cover;border-radius:4px;flex:0 0 auto;
+        box-shadow:0 0 0 1px rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.5)}
+    .bandera.ph{background:repeating-linear-gradient(45deg,#1b2a66,#1b2a66 5px,#16224f 5px,#16224f 10px)}
+    .nombre{flex:1;font-size:.82rem;font-weight:700}
+    .goles{font-family:'Anton';min-width:1.2rem;text-align:center;color:var(--gold);font-size:1rem}
+    .equipo.gana{background:rgba(34,199,154,.16)}
+    .equipo.gana .nombre::after{content:" ✓";color:var(--verde)}
+    .equipo.tbd{opacity:.5}
+    .lado-der .equipo{flex-direction:row-reverse;text-align:right}
+    .lado-der .nombre{text-align:right}
+    .centro{display:flex;flex-direction:column;align-items:center;min-width:230px;padding:0 .5rem;position:relative;z-index:1}
+    .final-titulo{font-family:'Anton';color:var(--gold);letter-spacing:1.5px;font-size:.95rem;
+        text-align:center;margin-bottom:.6rem;text-shadow:0 2px 16px rgba(245,196,81,.4)}
+    .centro .match{width:200px;border-color:var(--gold);box-shadow:0 0 28px -6px rgba(245,196,81,.45)}
+    .trofeo-centro{margin:1.1rem 0 .4rem;filter:drop-shadow(0 10px 30px rgba(245,196,81,.55))}
+    .trofeo-centro .trofeo{width:120px;height:auto}
+    .campeon-rotulo{font-family:'Anton';letter-spacing:1px;font-size:.8rem;color:var(--txt);opacity:.9}
+    .acciones{display:flex;gap:.35rem;margin-top:.45rem}
+    details{flex:1}
+    details>summary{list-style:none;cursor:pointer;font-size:.66rem;font-weight:800;text-align:center;
+        padding:.3rem;border-radius:7px;border:1px solid var(--linea);background:rgba(27,42,102,.7)}
+    details>summary::-webkit-details-marker{display:none}
+    details[open]>summary{border-color:var(--gold)}
+    .form-mini{margin-top:.45rem;display:flex;flex-direction:column;gap:.3rem;text-align:left}
+    .status{display:block;font-size:.72rem;color:var(--verde);margin-top:.4rem;min-height:.9rem;text-align:center}
+</style>
+
+{% if es_admin %}
+<section class="card panel-admin" data-anim>
+    <h2>⚡ Carga rápida (admin)</h2>
+    <input id="buscaPartido" placeholder="🔎 Buscar partido por equipo…" autocomplete="off">
+    <div class="match-list" id="listaPartidos">
+        {% for m in lista_partidos %}
+        <button type="button" class="mitem" data-id="{{ m.id }}"
+                data-loc="{{ m.local }}" data-vis="{{ m.visitante }}"
+                data-locid="{{ m.equipo_local_id }}" data-visid="{{ m.equipo_visitante_id }}"
+                data-buscar="{{ m.local|lower }} {{ m.visitante|lower }} {{ m.nombre_ronda|lower }}">
+            <img src="https://flagcdn.com/w40/{{ m.local_codigo }}.png" alt="">
+            <span>{{ m.local }}</span>
+            <span style="opacity:.6">vs</span>
+            <img src="https://flagcdn.com/w40/{{ m.visitante_codigo }}.png" alt="">
+            <span>{{ m.visitante }}</span>
+            <span class="r">{{ m.nombre_ronda }}{% if m.estado=='finalizado' %} ✓{% endif %}</span>
+        </button>
+        {% endfor %}
+    </div>
+    <div class="sel-actual">Partido seleccionado: <b id="selTxt">ninguno</b></div>
+
+    <div class="grid2">
+        <!-- Predicción de un usuario -->
+        <form hx-post="/predicciones" hx-target="#panelStatus" hx-swap="innerHTML">
+            <p class="sub">🎯 Predicción de un usuario</p>
+            <input type="hidden" name="partido_id" id="pPartidoId">
+            <label>Usuario</label>
+            <select name="usuario_id" required>
+                <option value="" disabled selected>Elegir usuario…</option>
+                {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nombre }}</option>{% endfor %}
+            </select>
+            <div class="gol-row" style="margin-top:.4rem">
+                <div><label>Goles local</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                <span class="x">-</span>
+                <div><label>Goles visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+            </div>
+            <button class="btn btn-needs-sel" type="submit" disabled style="width:100%;margin-top:.7rem">Guardar predicción</button>
+        </form>
+
+        <!-- Resultado oficial -->
+        <form id="formRes" hx-target="#bracket" hx-swap="outerHTML">
+            <p class="sub">✅ Resultado oficial</p>
+            <input type="hidden" name="equipo_local_id" id="rLocId">
+            <input type="hidden" name="equipo_visitante_id" id="rVisId">
+            <div class="gol-row">
+                <div><label>Goles local</label><input type="number" name="goles_local" min="0" value="0" required></div>
+                <span class="x">-</span>
+                <div><label>Goles visita</label><input type="number" name="goles_visitante" min="0" value="0" required></div>
+            </div>
+            <label style="margin-top:.4rem">Clasifica (si hay empate / penales)</label>
+            <select name="ganador_equipo_id" id="rGan"><option value="">—</option></select>
+            <button class="btn btn-needs-sel" type="submit" disabled style="width:100%;margin-top:.7rem">Registrar resultado</button>
+        </form>
+    </div>
+    <div id="panelStatus" class="status"></div>
+</section>
+{% endif %}
+
+<div class="zoom-bar">
+    <button id="zOut" title="Alejar">−</button>
+    <span id="zLbl">100%</span>
+    <button id="zIn" title="Acercar">+</button>
+    <button id="zFit" class="ancho" title="Ver completo">⤢ Ajustar</button>
+</div>
+
+<section class="card" style="padding:.4rem">
+    <div class="zoom-viewport" id="zoomVp">
+        <div class="zoom-sizer" id="zoomSizer">
+            {% include "_bracket.html" %}
+        </div>
+    </div>
+</section>
+<p style="color:var(--muted);font-size:.75rem;margin-top:.6rem;text-align:center">
+    🔎 Usa <b>+ / −</b> o <b>⤢ Ajustar</b> para ver toda la llave. Desliza para moverte.
+</p>
+
+<script>
+    // ===== Líneas conectoras (compensan el zoom) =====
+    function dibujarLineas(){
+        const cont=document.getElementById('bracket');
+        const svg=document.getElementById('conectores');
+        if(!cont||!svg) return;
+        const z=window.__zoom||1;
+        const W=cont.scrollWidth, H=cont.scrollHeight;
+        svg.setAttribute('viewBox','0 0 '+W+' '+H);
+        svg.style.width=W+'px'; svg.style.height=H+'px';
+        while(svg.firstChild) svg.removeChild(svg.firstChild);
+        const cb=cont.getBoundingClientRect();
+        cont.querySelectorAll('.match[data-next]').forEach(src=>{
+            const nid=src.getAttribute('data-next'); if(!nid) return;
+            const tgt=document.getElementById('m-'+nid); if(!tgt) return;
+            const r1=src.getBoundingClientRect(), r2=tgt.getBoundingClientRect();
+            const izq=r1.left<r2.left;
+            const sx=((izq?r1.right:r1.left)-cb.left)/z;
+            const sy=(r1.top+r1.height/2-cb.top)/z;
+            const tx=((izq?r2.left:r2.right)-cb.left)/z;
+            const ty=(r2.top+r2.height/2-cb.top)/z;
+            const mx=(sx+tx)/2;
+            const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+            pl.setAttribute('points',[[sx,sy],[mx,sy],[mx,ty],[tx,ty]].map(p=>p.join(',')).join(' '));
+            pl.setAttribute('fill','none');pl.setAttribute('stroke','rgba(255,255,255,.5)');
+            pl.setAttribute('stroke-width','2');pl.setAttribute('stroke-linejoin','round');
+            svg.appendChild(pl);
+        });
+    }
+
+    // ===== Zoom =====
+    let z=1;
+    const vp=document.getElementById('zoomVp'), sizer=document.getElementById('zoomSizer');
+    function aplicarZoom(){
+        const b=document.getElementById('bracket'); if(!b) return;
+        b.style.transform='scale('+z+')';
+        window.__zoom=z;
+        sizer.style.width=(b.offsetWidth*z)+'px';
+        sizer.style.height=(b.offsetHeight*z)+'px';
+        document.getElementById('zLbl').textContent=Math.round(z*100)+'%';
+    }
+    function setZoom(nz){z=Math.min(1.6,Math.max(0.3,nz));aplicarZoom();}
+    function ajustar(){const b=document.getElementById('bracket');if(!b)return;
+        setZoom(Math.min(1,(vp.clientWidth-6)/b.offsetWidth));}
+    document.getElementById('zIn').onclick=()=>setZoom(z+0.1);
+    document.getElementById('zOut').onclick=()=>setZoom(z-0.1);
+    document.getElementById('zFit').onclick=ajustar;
+
+    function refrescar(){aplicarZoom();dibujarLineas();}
+    window.addEventListener('load',()=>{ajustar();dibujarLineas();setTimeout(()=>{ajustar();dibujarLineas();},700);});
+    window.addEventListener('resize',()=>{clearTimeout(window.__rt);window.__rt=setTimeout(refrescar,120);});
+    document.body.addEventListener('htmx:afterSwap',()=>setTimeout(refrescar,150));
+    setTimeout(()=>{ajustar();dibujarLineas();},300);
+
+    // ===== Panel admin: buscador + selección de partido =====
+    (function(){
+        const busca=document.getElementById('buscaPartido');
+        if(!busca) return;
+        busca.addEventListener('input',()=>{const q=busca.value.toLowerCase().trim();
+            document.querySelectorAll('.mitem').forEach(b=>{
+                b.style.display=b.dataset.buscar.includes(q)?'':'none';});});
+        document.querySelectorAll('.mitem').forEach(b=>{
+            b.addEventListener('click',()=>{
+                document.querySelectorAll('.mitem.activo').forEach(x=>x.classList.remove('activo'));
+                b.classList.add('activo');
+                document.getElementById('pPartidoId').value=b.dataset.id;
+                document.getElementById('rLocId').value=b.dataset.locid;
+                document.getElementById('rVisId').value=b.dataset.visid;
+                document.getElementById('rGan').innerHTML=
+                    '<option value="'+b.dataset.locid+'">'+b.dataset.loc+'</option>'+
+                    '<option value="'+b.dataset.visid+'">'+b.dataset.vis+'</option>';
+                const fr=document.getElementById('formRes');
+                fr.setAttribute('hx-post','/partidos/'+b.dataset.id+'/resultado');
+                if(window.htmx) htmx.process(fr);
+                document.getElementById('selTxt').textContent=b.dataset.loc+' vs '+b.dataset.vis;
+                document.querySelectorAll('.btn-needs-sel').forEach(x=>x.disabled=false);
+            });
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+<svg class="trofeo" viewBox="0 0 140 175" xmlns="http://www.w3.org/2000/svg" aria-label="Copa del Mundo" role="img">
+    <defs>
+        <linearGradient id="oroT" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff3cf"/>
+            <stop offset=".4" stop-color="#f5c451"/>
+            <stop offset="1" stop-color="#b8801f"/>
+        </linearGradient>
+        <radialGradient id="brilloT" cx=".35" cy=".25" r=".8">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".85"/>
+            <stop offset=".4" stop-color="#ffffff" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <!-- Balón / globo sobre la copa -->
+    <circle cx="70" cy="20" r="12" fill="url(#oroT)" stroke="#8a5e12" stroke-width="1.2"/>
+    <path d="M70 9 l3.3 6.6 7.3 1-5.3 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.3-5.2 7.3-1z"
+          fill="#fff7df" opacity=".9"/>
+    <!-- Asas -->
+    <path d="M40 48 C16 48 17 86 46 92" fill="none" stroke="url(#oroT)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M100 48 C124 48 123 86 94 92" fill="none" stroke="url(#oroT)" stroke-width="7" stroke-linecap="round"/>
+    <!-- Copa -->
+    <path d="M34 42 H106 L97 96 C94 109 84 117 70 117 C56 117 46 109 43 96 Z"
+          fill="url(#oroT)" stroke="#8a5e12" stroke-width="1.4"/>
+    <!-- Estrella en la copa -->
+    <path d="M70 60 l3.7 7.6 8.3 1.1-6 5.9 1.4 8.3-7.4-4-7.4 4 1.4-8.3-6-5.9 8.3-1.1z"
+          fill="#b8801f" opacity=".55"/>
+    <!-- Tallo -->
+    <rect x="63" y="117" width="14" height="20" rx="2" fill="url(#oroT)" stroke="#8a5e12" stroke-width="1"/>
+    <!-- Base -->
+    <path d="M46 137 H94 L101 158 H39 Z" fill="url(#oroT)" stroke="#8a5e12" stroke-width="1.2"/>
+    <rect x="34" y="158" width="72" height="9" rx="3" fill="url(#oroT)" stroke="#8a5e12" stroke-width="1.2"/>
+    <!-- Brillo -->
+    <path d="M34 42 H106 L97 96 C94 109 84 117 70 117 C56 117 46 109 43 96 Z" fill="url(#brilloT)"/>
+</svg>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}Quiniela Mundial 2026 · Familia Barreto{% endblock %}</title>
+    <!-- PWA (app instalable en Android/iOS) -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#050a1f">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Quiniela Barreto">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Motion One: animaciones tipo Framer Motion en JS puro -->
+    <script src="https://cdn.jsdelivr.net/npm/motion@10.18.0/dist/motion.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --ink:#050a1f; --ink2:#0b1538; --panel:#142152; --panel2:#1b2a66;
+            --linea:rgba(245,196,81,.18); --txt:#f4f1ea; --muted:#a6b6e6;
+            --gold:#f5c451; --gold-2:#e0a92e; --royal:#5b2bb3; --azul:#2563eb;
+            --verde:#22c79a; --rojo:#ff6b6b;
+            --grad-oro:linear-gradient(180deg,#fff3cf 0%,#f5c451 45%,#c2871f 100%);
+        }
+        *{box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        body{margin:0;font-family:'Outfit',system-ui,sans-serif;color:var(--txt);
+            min-height:100vh;background:var(--ink);overflow-x:hidden;
+            -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+            padding-bottom:env(safe-area-inset-bottom)}
+
+        /* ===== Fondo azul base ===== */
+        .escena{position:fixed;inset:0;z-index:-6;
+            background:
+              radial-gradient(1000px 560px at 18% -8%, rgba(37,99,235,.55), transparent 60%),
+              radial-gradient(900px 600px at 85% 0%, rgba(91,43,179,.45), transparent 60%),
+              radial-gradient(1200px 800px at 50% 120%, rgba(245,196,81,.16), transparent 60%),
+              linear-gradient(180deg,#0a1644 0%,#071233 50%,#040814 100%);}
+        .escena::before{content:"";position:absolute;inset:0;mix-blend-mode:screen;opacity:.75;
+            background:
+              conic-gradient(from 205deg at 10% -5%, rgba(255,255,255,.12), transparent 16%),
+              conic-gradient(from 155deg at 90% -5%, rgba(255,255,255,.12), transparent 16%);}
+
+        /* ===== Capas de arte (parallax) ===== */
+        .bg-layer{position:fixed;inset:0;pointer-events:none;will-change:transform}
+        .cap-trofeo{z-index:-5;display:flex;justify-content:center;align-items:center;opacity:.08}
+        .cap-trofeo svg{width:min(60vw,560px);height:auto}
+        .cap-estadio{z-index:-5;display:flex;align-items:flex-end}
+        .cap-estadio svg{width:100%;height:auto;opacity:.5}
+        .cap-balones{z-index:-4}
+        .cap-balones .ball{position:absolute;opacity:.16;animation:flota ease-in-out infinite}
+        @keyframes flota{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-26px) rotate(18deg)}}
+
+        /* Partículas doradas */
+        .particulas{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
+        .particulas i{position:absolute;bottom:-20px;border-radius:50%;
+            background:radial-gradient(circle,#fff,var(--gold));opacity:0;
+            box-shadow:0 0 8px var(--gold);animation:subir linear infinite}
+        @keyframes subir{0%{transform:translateY(0) scale(.6);opacity:0}
+            10%{opacity:.9}90%{opacity:.7}100%{transform:translateY(-105vh) scale(1);opacity:0}}
+
+        /* ===== Cabecera / banner ===== */
+        header{position:relative;text-align:center;
+            padding:calc(1.5rem + env(safe-area-inset-top)) 1rem 1.3rem;
+            border-bottom:1px solid var(--linea);
+            background:linear-gradient(180deg,rgba(37,99,235,.28),rgba(5,10,31,0));overflow:hidden}
+        .banner-glow{position:absolute;inset:-45% 0 auto 0;height:320px;
+            background:radial-gradient(closest-side,rgba(245,196,81,.30),transparent);filter:blur(22px)}
+        .marca{display:flex;align-items:center;justify-content:center;gap:1.1rem;position:relative}
+        .trofeo{width:56px;height:auto;filter:drop-shadow(0 6px 18px rgba(245,196,81,.55))}
+        .titulo h1{font-family:'Anton',sans-serif;margin:0;letter-spacing:1.2px;
+            font-size:clamp(1.5rem,4.6vw,2.7rem);line-height:.95;
+            background:var(--grad-oro);-webkit-background-clip:text;background-clip:text;
+            -webkit-text-fill-color:transparent;text-shadow:0 2px 34px rgba(245,196,81,.25)}
+        .familia{display:inline-block;margin-top:.55rem;font-family:'Anton';letter-spacing:3px;
+            font-size:clamp(.85rem,2.4vw,1.15rem);color:#06122e;padding:.18rem 1rem;border-radius:999px;
+            background:var(--grad-oro);box-shadow:0 8px 22px -8px rgba(245,196,81,.7)}
+        .familia small{font-family:'Outfit';font-weight:700}
+        .subt{display:block;color:var(--muted);font-size:.68rem;letter-spacing:5px;
+            font-weight:700;margin-top:.55rem}
+
+        /* ===== Nav premium ===== */
+        nav{display:flex;gap:.6rem;justify-content:center;margin-top:1.15rem;position:relative;flex-wrap:wrap}
+        nav a,nav button{position:relative;overflow:hidden;color:var(--txt);text-decoration:none;
+            font-family:'Outfit',sans-serif;cursor:pointer;
+            font-size:.8rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+            padding:.6rem 1.1rem;border-radius:999px;border:1px solid var(--linea);
+            background:linear-gradient(160deg,rgba(27,42,102,.7),rgba(11,21,56,.7));
+            backdrop-filter:blur(8px);transition:transform .25s,box-shadow .25s,border-color .25s}
+        nav a .ic{margin-right:.4rem}
+        nav a::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;
+            background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);
+            transform:skewX(-20deg);transition:left .6s}
+        nav a:hover::after{left:130%}
+        nav a:hover,nav button:hover{transform:translateY(-2px);border-color:var(--gold);
+            box-shadow:0 10px 26px -10px rgba(245,196,81,.6)}
+        nav a.activo{background:var(--grad-oro);color:#3a2606;border-color:transparent;
+            box-shadow:0 12px 26px -10px rgba(245,196,81,.8)}
+        nav .b-instalar{border-color:var(--verde);color:#bdf7e4}
+
+        main{max-width:1500px;margin:1.6rem auto;padding:0 1rem;position:relative}
+
+        /* ===== Tarjetas glass ===== */
+        .card{background:linear-gradient(160deg,rgba(28,42,102,.6),rgba(11,21,56,.72));
+            backdrop-filter:blur(16px);border:1px solid var(--linea);border-radius:20px;
+            padding:1.3rem;box-shadow:0 24px 60px -28px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07)}
+        h2{margin:0 0 1rem;font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:.5rem}
+
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:.6rem .55rem;text-align:left;border-bottom:1px solid rgba(255,255,255,.06)}
+        th{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+        td.num,th.num{text-align:center}
+        .pts{font-family:'Anton';font-size:1.05rem;color:var(--gold);letter-spacing:.5px}
+        tbody tr{transition:.2s}
+        tbody tr:hover{background:rgba(245,196,81,.07)}
+        tbody tr:nth-child(1){background:linear-gradient(90deg,rgba(245,196,81,.16),transparent)}
+
+        .btn{display:inline-block;background:var(--grad-oro);color:#3a2606;text-decoration:none;
+            padding:.7rem 1.3rem;border-radius:12px;font-weight:800;border:0;cursor:pointer;
+            font-size:.92rem;box-shadow:0 10px 24px -10px rgba(245,196,81,.7);transition:.2s}
+        .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+        input,select{width:100%;padding:.55rem;border:1px solid var(--linea);border-radius:9px;
+            background:rgba(5,10,31,.6);color:var(--txt);font-size:16px;font-family:'Outfit'}
+        label{font-size:.72rem;color:var(--muted);display:block;margin:.35rem 0 .15rem}
+        .stat{display:flex;gap:1.6rem;margin-bottom:1.1rem}
+        .stat b{font-family:'Anton';font-size:1.9rem;color:var(--verde);display:block;line-height:1}
+        .stat span{font-size:.72rem;color:var(--muted)}
+        .htmx-indicator{opacity:0;transition:opacity .2s}
+        .htmx-request .htmx-indicator{opacity:1}
+    </style>
+</head>
+<body>
+    <div class="escena"></div>
+
+    <!-- Copa gigante de fondo (capa lejana) -->
+    <div class="bg-layer cap-trofeo" data-parallax="0.10">{% include "_trofeo.svg" %}</div>
+
+    <!-- Silueta de estadio con torres de luz -->
+    <div class="bg-layer cap-estadio" data-parallax="0.045">
+        <svg viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="estG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#1b3a8a"/><stop offset="1" stop-color="#0a1230"/>
+                </linearGradient>
+                <radialGradient id="luzG" cx=".5" cy=".1" r=".6">
+                    <stop offset="0" stop-color="#bcd2ff" stop-opacity=".9"/>
+                    <stop offset="1" stop-color="#bcd2ff" stop-opacity="0"/>
+                </radialGradient>
+            </defs>
+            <!-- haces de luz -->
+            <polygon points="180,40 120,420 360,420 300,40" fill="url(#luzG)" opacity=".25"/>
+            <polygon points="1260,40 1200,420 1440,420 1380,40" fill="url(#luzG)" opacity=".25"/>
+            <!-- torres -->
+            <g fill="#0e1c44"><rect x="170" y="70" width="14" height="330"/><rect x="1256" y="70" width="14" height="330"/>
+               <rect x="150" y="48" width="54" height="30" rx="5"/><rect x="1236" y="48" width="54" height="30" rx="5"/></g>
+            <circle cx="177" cy="55" r="7" fill="url(#luzG)"/><circle cx="1263" cy="55" r="7" fill="url(#luzG)"/>
+            <!-- estadio -->
+            <path d="M0 420 V300 C0 230 120 175 300 160 C520 142 920 142 1140 160 C1320 175 1440 230 1440 300 V420 Z" fill="url(#estG)"/>
+            <path d="M180 420 V312 C180 270 360 240 720 240 C1080 240 1260 270 1260 312 V420 Z" fill="#0a1738"/>
+            <ellipse cx="720" cy="312" rx="430" ry="40" fill="#0c1f4d"/>
+        </svg>
+    </div>
+
+    <!-- Balones flotantes (capa cercana) -->
+    <div class="bg-layer cap-balones" data-parallax="0.16" id="balones"></div>
+
+    <div class="particulas" id="particulas"></div>
+
+    <header>
+        <div class="banner-glow"></div>
+        <div class="marca">
+            {% include "_trofeo.svg" %}
+            <div class="titulo">
+                <h1>QUINIELA MUNDIAL 2026</h1>
+                <span class="familia">⭐ FAMILIA BARRETO ⭐</span>
+                <span class="subt">FASE ELIMINATORIA</span>
+            </div>
+            {% include "_trofeo.svg" %}
+        </div>
+        <nav>
+            <a href="/" class="{{ 'activo' if request.url.path == '/' else '' }}"><span class="ic">📊</span>Tabla</a>
+            <a href="/bracket" class="{{ 'activo' if request.url.path == '/bracket' else '' }}"><span class="ic">🗂️</span>Bracket</a>
+            <button id="btnInstalar" class="b-instalar" hidden>⬇️ Instalar app</button>
+            {% if es_admin %}
+                <a href="/logout">👤 {{ request.session.get('admin') }} · Salir</a>
+            {% else %}
+                <a href="/login">🔐 Admin</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>{% block content %}{% endblock %}</main>
+
+    <script>
+        // Balones de fondo (SVG) en posiciones aleatorias
+        (function(){
+            const cont=document.getElementById('balones');
+            const ball=`<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="30" fill="#eaf0ff"/>
+                <path d="M32 14l9 6-3 11H26l-3-11z" fill="#13235a"/>
+                <path d="M32 6l4 7-4 4-4-4z M9 30l8-3 3 6-5 6z M55 30l-8-3-3 6 5 6z M20 54l-3-8 6-2 4 6z M44 54l3-8-6-2-4 6z" fill="#13235a" opacity=".85"/>
+                <circle cx="32" cy="32" r="30" fill="none" stroke="#13235a" stroke-width="2"/></svg>`;
+            const pos=[[8,18,70],[78,26,90],[20,68,56],[88,72,64],[60,40,46],[42,84,52]];
+            pos.forEach(([l,t,s],i)=>{const d=document.createElement('div');
+                d.className='ball';d.style.left=l+'%';d.style.top=t+'%';
+                d.style.width=s+'px';d.style.animationDuration=(9+i*1.6)+'s';
+                d.style.animationDelay=(-i*1.3)+'s';d.innerHTML=ball;cont.appendChild(d);});
+        })();
+
+        // Partículas doradas
+        (function(){
+            const c=document.getElementById('particulas');
+            for(let i=0;i<26;i++){const p=document.createElement('i');
+                p.style.left=Math.random()*100+'%';
+                p.style.animationDuration=(7+Math.random()*9)+'s';
+                p.style.animationDelay=(-Math.random()*12)+'s';
+                const s=(3+Math.random()*5);p.style.width=p.style.height=s+'px';c.appendChild(p);}
+        })();
+
+        // Parallax al hacer scroll
+        (function(){
+            const layers=[...document.querySelectorAll('[data-parallax]')];
+            let ticking=false;
+            function upd(){const y=window.scrollY||window.pageYOffset;
+                layers.forEach(l=>{const s=parseFloat(l.dataset.parallax);
+                    l.style.transform='translate3d(0,'+(y*s)+'px,0)';});ticking=false;}
+            window.addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(upd);ticking=true;}},{passive:true});
+        })();
+
+        // Motion One: entradas + flotación de la copa del banner
+        function animarEntrada(scope){
+            if(!window.Motion) return;
+            const {animate,stagger}=window.Motion;
+            const els=(scope||document).querySelectorAll('[data-anim]:not([data-animado])');
+            els.forEach(e=>e.setAttribute('data-animado','1'));
+            if(els.length) animate(els,
+                {opacity:[0,1],transform:['translateY(16px) scale(.985)','translateY(0) scale(1)']},
+                {duration:.55,delay:stagger(.045),easing:[.22,.61,.36,1]});
+        }
+        function flotarCopa(){
+            if(!window.Motion) return;
+            window.Motion.animate('header .trofeo',
+                {transform:['translateY(0)','translateY(-7px)','translateY(0)']},
+                {duration:4,repeat:Infinity,easing:'ease-in-out'});
+        }
+        document.addEventListener('DOMContentLoaded',()=>{animarEntrada();flotarCopa();});
+        document.body.addEventListener('htmx:afterSwap',e=>animarEntrada(e.target));
+
+        // ===== PWA: service worker + botón instalar =====
+        if('serviceWorker' in navigator){
+            navigator.serviceWorker.register('/sw.js').catch(()=>{});
+        }
+        (function(){
+            const btn=document.getElementById('btnInstalar');
+            if(!btn) return;
+            let prompt=null;
+            window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;btn.hidden=false;});
+            const esiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+            const instalada=window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
+            if(esiOS && !instalada) btn.hidden=false;   // iOS no dispara el evento: mostramos guía
+            btn.addEventListener('click',async()=>{
+                if(prompt){prompt.prompt();await prompt.userChoice;prompt=null;btn.hidden=true;}
+                else if(esiOS){alert('Para instalar en iPhone/iPad:\n\n1) Toca el botón Compartir (cuadro con flecha ↑)\n2) Elige "Añadir a pantalla de inicio".');}
+                else{alert('Abre el menú del navegador (⋮) y elige "Instalar app" o "Agregar a pantalla principal".');}
+            });
+            window.addEventListener('appinstalled',()=>{btn.hidden=true;});
+        })();
+    </script>
+</body>
+</html>
