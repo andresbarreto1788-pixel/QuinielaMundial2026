@@ -1,12 +1,25 @@
 """Conexión a PostgreSQL y consultas SQL de la quiniela (bracket v2)."""
 import os
+import sys
+from urllib.parse import urlsplit
+
+DEFAULT_LOCAL = "postgresql://postgres:postgres@localhost:5432/quiniela"
 
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/quiniela"
-)
+DATABASE_URL = os.environ.get("DATABASE_URL", DEFAULT_LOCAL)
+
+# Railway/Heroku a veces entregan el esquema 'postgres://'; psycopg usa 'postgresql://'.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Log de diagnóstico (sin exponer la contraseña): a qué host:puerto nos conectamos.
+_host = urlsplit(DATABASE_URL).hostname or "?"
+if not os.environ.get("DATABASE_URL"):
+    print("⚠️  DATABASE_URL no está definida: usando localhost (solo sirve en tu PC, "
+          "NO en Railway). Define DATABASE_URL en el servicio web.", file=sys.stderr)
+print(f"🗄️  Conectando a PostgreSQL en host '{_host}'", file=sys.stderr)
 
 pool = ConnectionPool(
     DATABASE_URL,

@@ -20,6 +20,16 @@ automática (3/1/0), cuentas de administrador, PWA instalable y diseño premium.
 > La inicialización es idempotente: solo siembra si la base está vacía, así que
 > los resultados que cargues **no se borran** en los siguientes despliegues.
 
+### 🩺 Error "connection refused 127.0.0.1:5432" en Railway
+Significa que el servicio web **no tiene `DATABASE_URL`** y cae al valor local.
+Arréglalo así:
+1. Servicio **web** → **Variables** → **+ New Variable**.
+2. Nombre `DATABASE_URL`, valor `${{Postgres.DATABASE_URL}}` (referencia al servicio Postgres).
+   - El nombre `Postgres` debe coincidir con el de tu servicio de base de datos.
+3. **Redeploy**. En los logs debe aparecer:
+   `🗄️ Conectando a PostgreSQL en host 'postgres.railway.internal'`
+   (si dice `localhost`, la variable sigue sin estar puesta).
+
 ## Arquitectura
 
 ```
