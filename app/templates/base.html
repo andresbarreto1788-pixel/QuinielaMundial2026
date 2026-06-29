@@ -101,6 +101,9 @@
         nav a.activo{background:var(--grad-oro);color:#3a2606;border-color:transparent;
             box-shadow:0 12px 26px -10px rgba(245,196,81,.8)}
         nav .b-instalar{border-color:var(--verde);color:#bdf7e4}
+        nav .b-instalar.listo{animation:pulsoInstalar 1.8s ease-in-out infinite}
+        @keyframes pulsoInstalar{0%,100%{box-shadow:0 0 0 0 rgba(34,199,154,.5)}
+            50%{box-shadow:0 0 0 8px rgba(34,199,154,0)}}
 
         main{max-width:1500px;margin:1.6rem auto;padding:0 1rem;position:relative}
 
@@ -184,7 +187,7 @@
         <nav>
             <a href="/" class="{{ 'activo' if request.url.path == '/' else '' }}"><span class="ic">📊</span>Tabla</a>
             <a href="/bracket" class="{{ 'activo' if request.url.path == '/bracket' else '' }}"><span class="ic">🗂️</span>Bracket</a>
-            <button id="btnInstalar" class="b-instalar" hidden>⬇️ Instalar app</button>
+            <button id="btnInstalar" class="b-instalar">⬇️ Instalar app</button>
             {% if es_admin %}
                 <a href="/logout">👤 {{ request.session.get('admin') }} · Salir</a>
             {% else %}
@@ -257,17 +260,23 @@
         (function(){
             const btn=document.getElementById('btnInstalar');
             if(!btn) return;
-            let prompt=null;
-            window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;btn.hidden=false;});
-            const esiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+            // Si ya está instalada (abierta como app), no hace falta el botón.
             const instalada=window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
-            if(esiOS && !instalada) btn.hidden=false;   // iOS no dispara el evento: mostramos guía
+            if(instalada){btn.style.display='none';return;}
+            let prompt=null;
+            window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;btn.classList.add('listo');});
             btn.addEventListener('click',async()=>{
-                if(prompt){prompt.prompt();await prompt.userChoice;prompt=null;btn.hidden=true;}
-                else if(esiOS){alert('Para instalar en iPhone/iPad:\n\n1) Toca el botón Compartir (cuadro con flecha ↑)\n2) Elige "Añadir a pantalla de inicio".');}
-                else{alert('Abre el menú del navegador (⋮) y elige "Instalar app" o "Agregar a pantalla principal".');}
+                if(prompt){prompt.prompt();await prompt.userChoice;prompt=null;return;}
+                const ua=navigator.userAgent;
+                if(/iphone|ipad|ipod/i.test(ua)){
+                    alert('📲 Instalar en iPhone/iPad (Safari):\n\n1) Toca Compartir (cuadro con flecha ↑)\n2) "Añadir a pantalla de inicio"\n3) "Añadir"');
+                }else if(/android/i.test(ua)){
+                    alert('📲 Instalar en Android (Chrome):\n\n1) Abre el menú ⋮ (arriba a la derecha)\n2) "Instalar app" o "Agregar a pantalla principal"');
+                }else{
+                    alert('📲 Instalar en computadora (Chrome/Edge):\n\nHaz clic en el ícono de instalar (⊕) en la barra de direcciones, o menú ⋮ → "Instalar Quiniela…".');
+                }
             });
-            window.addEventListener('appinstalled',()=>{btn.hidden=true;});
+            window.addEventListener('appinstalled',()=>{btn.style.display='none';});
         })();
     </script>
 </body>
