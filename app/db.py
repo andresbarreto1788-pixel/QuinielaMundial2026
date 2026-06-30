@@ -116,6 +116,26 @@ WHERE id = %(partido_id)s
 RETURNING id;
 """
 
+# Deshacer un resultado cargado por error: el partido vuelve a 'pendiente',
+# se borra el marcador y el clasificado. Devuelve a qué partido avanzaba el
+# ganador (next_*) para limpiar también ese hueco del bracket.
+RESETEAR_RESULTADO = """
+UPDATE partidos
+SET goles_local       = NULL,
+    goles_visitante   = NULL,
+    ganador_equipo_id = NULL,
+    estado            = 'pendiente'
+WHERE id = %(partido_id)s
+RETURNING id, next_partido_id, next_slot;
+"""
+
+LIMPIAR_HUECO_LOCAL     = "UPDATE partidos SET equipo_local_id     = NULL WHERE id = %s;"
+LIMPIAR_HUECO_VISITANTE = "UPDATE partidos SET equipo_visitante_id = NULL WHERE id = %s;"
+
+# ¿El siguiente partido ya tiene resultado cargado? Si es así, no debemos
+# vaciar su hueco a ciegas (rompería una ronda posterior ya jugada).
+ESTADO_PARTIDO = "SELECT estado FROM partidos WHERE id = %s;"
+
 
 def tabla_posiciones():
     with pool.connection() as conn:
@@ -161,3 +181,30 @@ def registrar_resultado(partido_id, goles_local, goles_visitante, ganador):
             "partido_id": partido_id, "goles_local": goles_local,
             "goles_visitante": goles_visitante, "ganador": ganador,
         }).fetchone()
+
+
+def resetear_resultado(partido_id):
+    """Deshace el resultado de un partido (cargado por error).
+
+    - Vuelve el partido a 'pendiente' y borra marcador/clasificado.
+    - Saca al equipo que ya había avanzado al siguiente partido del bracket,
+      siempre que ese siguiente partido NO esté ya finalizado (en cuyo caso
+      se deja intacto para no romper una ronda posterior ya jugada).
+
+    Las predicciones se conservan: simplemente dejan de puntuar hasta que se
+    vuelva a cargar el resultado correcto.
+
+    Devuelve None si el partido no existe.
+    """
+    with pool.connection() as conn:
+        fila = conn.execute(RESETEAR_RESULTADO, {"partido_id": partido_id}).fetchone()
+        if fila is None:
+            return None
+
+        next_id, slot = fila["next_partido_id"], fila["next_slot"]
+        if next_id and slot:
+            siguiente = conn.execute(ESTADO_PARTIDO, (next_id,)).fetchone()
+            if siguiente and siguiente["estado"] != "finalizado":
+                sql = LIMPIAR_HUECO_LOCAL if slot == "L" else LIMPIAR_HUECO_VISITANTE
+                conn.execute(sql, (next_id,))
+        return fila

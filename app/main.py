@@ -215,6 +215,19 @@ def cerrar_partido(
     return _fragmento_bracket(request)
 
 
+@app.post("/partidos/{partido_id}/reset", response_class=HTMLResponse)
+def reabrir_partido(request: Request, partido_id: int):
+    """Deshace un resultado cargado por error: el partido vuelve a 'pendiente'.
+
+    Útil cuando un admin registra el marcador de un partido que aún no se juega.
+    Las predicciones se conservan y dejan de puntuar hasta recargar el resultado.
+    """
+    requiere_admin(request)
+    if db.resetear_resultado(partido_id) is None:
+        raise HTTPException(404, "Partido no encontrado.")
+    return _fragmento_bracket(request)
+
+
 # ---------------------------------------------------------------------
 # PWA: manifest, service worker e icono (app instalable en Android/iOS)
 # ---------------------------------------------------------------------

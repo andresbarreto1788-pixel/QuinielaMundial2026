@@ -63,4 +63,18 @@
     </div>
     <span class="status" id="status-{{ m.id }}"></span>
     {% endif %}
+
+    {% if m.estado == 'finalizado' and es_admin %}
+    <div class="acciones">
+        <details>
+            <summary>♻️ Corregir / Deshacer</summary>
+            <form class="form-mini" hx-post="/partidos/{{ m.id }}/reset"
+                  hx-target="#bracket" hx-swap="outerHTML"
+                  hx-confirm="¿Deshacer el resultado de {{ m.local }} vs {{ m.visitante }}? El partido volverá a estar pendiente y podrás cargar el marcador correcto. Las predicciones se conservan.">
+                <p class="reset-aviso">Borra el marcador y reabre el partido. Úsalo si se cargó por error.</p>
+                <button class="btn btn-reset" type="submit">Deshacer resultado</button>
+            </form>
+        </details>
+    </div>
+    {% endif %}
 </div>
